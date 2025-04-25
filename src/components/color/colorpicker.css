@@ -1,0 +1,22 @@
+/* Custom styles for the color picker */
+.small-color-picker {
+  width: 100% !important;
+  height: 180px !important;
+}
+
+/* Make the selection circle smaller */
+.small-color-picker .react-colorful__pointer {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+/* Reduce the height of the hue slider */
+.small-color-picker .react-colorful__hue {
+  height: 12px !important;
+}
+
+/* Optional: adjust padding for better proportions */
+.small-color-picker .react-colorful__saturation,
+.small-color-picker .react-colorful__hue {
+  border-radius: 3px !important;
+} 
