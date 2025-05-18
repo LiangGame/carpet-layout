@@ -3,21 +3,18 @@ import { useToolsStore, ToolType } from '../../store/toolsStore';
 import { Tooltip, Button, Divider } from 'antd';
 import {
   SelectOutlined,
-  BorderOutlined,
   LineOutlined,
   HighlightOutlined,
   FolderOutlined,
   FontSizeOutlined,
-  RadiusUpleftOutlined,
   LayoutOutlined,
   EyeOutlined,
   BgColorsOutlined,
   EditOutlined,
-  PartitionOutlined,
-  BlockOutlined,
   AppstoreOutlined,
-  RotateLeftOutlined,
   ExpandOutlined,
+  TableOutlined,
+  CiCircleOutlined
 } from '@ant-design/icons';
 
 const toolbarContainerStyle: React.CSSProperties = {
@@ -38,7 +35,7 @@ interface ToolButtonProps {
   onClick: () => void;
 }
 
-const ToolButton: React.FC<ToolButtonProps> = ({ tool, icon, title, isActive, onClick }) => {
+const ToolButton: React.FC<ToolButtonProps> = ({ icon, title, isActive, onClick }) => {
   return (
     <Tooltip title={title} placement="right">
       <Button
@@ -65,8 +62,8 @@ const Toolbar: React.FC = () => {
     { tool: 'select', icon: <SelectOutlined />, title: '选择工具', group: 'navigation' },
     { tool: 'canvas', icon: <LayoutOutlined />, title: '画布设置', group: 'settings' },
     { tool: 'brush', icon: <EditOutlined />, title: '画笔工具', group: 'drawing' },
-    { tool: 'rectangle', icon: <BorderOutlined />, title: '矩形工具', group: 'drawing' },
-    { tool: 'circle', icon: <RadiusUpleftOutlined />, title: '圆形工具', group: 'drawing' },
+    { tool: 'rectangle', icon: <TableOutlined />, title: '矩形工具', group: 'drawing' },
+    { tool: 'circle', icon: <CiCircleOutlined />, title: '圆形工具', group: 'drawing' },
     { tool: 'line', icon: <LineOutlined />, title: '直线工具', group: 'drawing' },
     { tool: 'polygon', icon: <HighlightOutlined />, title: '多边形工具', group: 'drawing' },
     { tool: 'path', icon: <EditOutlined rotate={45} />, title: '路径工具', group: 'drawing' },

@@ -1,7 +1,6 @@
-import React from 'react';
 import { useAtom } from 'jotai';
 import { canvasGridAtom, canvasSizeAtom, showGridAtom } from '../../atoms/canvasAtoms';
-import { Form, InputNumber, Checkbox, Slider, Space, Typography, Button, Row, Col } from 'antd';
+import { InputNumber, Checkbox, Slider, Typography, Button, Row, Col } from 'antd';
 import { RedoOutlined, ColumnWidthOutlined, ColumnHeightOutlined, BorderOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;

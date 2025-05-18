@@ -1,13 +1,10 @@
-import React, { useState } from 'react';
-import { Card, Tabs, Typography, Form, InputNumber, Space, Checkbox, Button, Row, Col, Menu, Input, Select, Divider } from 'antd';
-import { useAtom } from 'jotai';
-import { canvasGridAtom, canvasSizeAtom, showGridAtom } from '../../atoms/canvasAtoms';
+import React from 'react';
+import { Tabs, Typography, Form, InputNumber, Space, Checkbox, Button, Row, Col, Select } from 'antd';
 import CanvasControls from '../canvas/CanvasControls';
 import ColorPicker from '../color/ColorPicker';
 import DrawingColorPicker from './DrawingColorPicker';
 import { usePatternStore, ArrangementType, TransformationType } from '../../store/patternStore';
 import { RedoOutlined } from '@ant-design/icons';
-import { useToolsStore } from '../../store/toolsStore';
 import { useDrawingStore } from '../../store/drawingStore';
 
 const { Text } = Typography;
@@ -46,25 +43,6 @@ const styles = {
     padding: '12px',
     color: '#ddd',
   }
-};
-
-// 定义Tabs组件的样式覆盖
-const tabsStyle = {
-  '.ant-tabs-tab': {
-    color: '#bbb !important',
-  },
-  '.ant-tabs-tab-active': {
-    color: '#fff !important',
-  },
-  '.ant-tabs-tab-btn': {
-    color: 'inherit',
-  },
-  '.ant-tabs-ink-bar': {
-    backgroundColor: '#1890ff',
-  },
-  '.ant-form-item-label > label': {
-    color: '#ccc',
-  },
 };
 
 interface ToolPropertiesProps {

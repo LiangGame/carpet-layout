@@ -5,7 +5,6 @@ import { useToolsStore } from '../../store/toolsStore';
 import { useDrawingStore } from '../../store/drawingStore';
 import Rulers from './Rulers';
 import Konva from 'konva';
-import { createPortal } from 'react-dom';
 import { ReloadOutlined, CheckOutlined, CloseOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { useHistoryStore } from '../../store/historyStore';
 
@@ -117,12 +116,6 @@ const resetButtonStyle: React.CSSProperties = {
   gap: '2px',
 };
 
-// 添加图标样式
-const iconStyle: React.CSSProperties = {
-  fontSize: '10px',
-  marginRight: '2px',
-};
-
 const zoomTextStyle: React.CSSProperties = {
   margin: '0 5px',
   minWidth: '45px',
@@ -137,7 +130,7 @@ export interface CanvasRef {
 }
 
 // 修改为接受ref参数的组件
-const Canvas = forwardRef<CanvasRef, {}>((props, ref) => {
+const Canvas = forwardRef<CanvasRef, object>((_props, ref) => {
   const stageRef = useRef<Konva.Stage>(null);
   const layerRef = useRef<Konva.Layer>(null);
   
@@ -164,9 +157,8 @@ const Canvas = forwardRef<CanvasRef, {}>((props, ref) => {
   const [currentShapeId, setCurrentShapeId] = useState<string | null>(null);
   
   // 钢笔工具状态
-  const [currentPath, setCurrentPath] = useState<{x: number, y: number, controlX1?: number, controlY1?: number, controlX2?: number, controlY2?: number}[]>([]);
-  const [isDraggingControl, setIsDraggingControl] = useState(false);
-  const [activeControlPoint, setActiveControlPoint] = useState<{index: number, handle: 'controlPoint1' | 'controlPoint2' | null}>({index: -1, handle: null});
+  const [currentPath, setCurrentPath] = useState<{ x: number, y: number, controlX1?: number, controlY1?: number, controlX2?: number, controlY2?: number }[]>([]);
+  const [activeControlPoint] = useState<{index: number, handle: 'controlPoint1' | 'controlPoint2' | null}>({index: -1, handle: null});
   const [lastMousePos, setLastMousePos] = useState<{x: number, y: number} | null>(null);
   
   // 历史记录处理
@@ -208,7 +200,6 @@ const Canvas = forwardRef<CanvasRef, {}>((props, ref) => {
     width,
     height,
     zoom,
-    dpi,
     pan,
     showGrid,
     showRulers,
@@ -255,14 +246,6 @@ const Canvas = forwardRef<CanvasRef, {}>((props, ref) => {
   };
 
   // 缩放处理
-  const handleWheel = (e: React.WheelEvent) => {
-    // 不再调用preventDefault，避免passive事件限制
-    const delta = e.deltaY;
-    const newZoom = zoom - delta / 10;
-    // 限制缩放范围
-    const limitedZoom = Math.max(20, Math.min(400, newZoom));
-    setZoom(limitedZoom);
-  };
 
   // 空格+拖拽平移画布
   const [isSpacePressed, setIsSpacePressed] = React.useState(false);
@@ -276,16 +259,10 @@ const Canvas = forwardRef<CanvasRef, {}>((props, ref) => {
   // 添加转折点节点状态
   const [joints, setJoints] = useState<JointProps[]>([]);
 
-  // 添加吸附状态
-  const [snapPosition, setSnapPosition] = useState<{x: number | null, y: number | null}>({x: null, y: null});
-
   // 在Canvas组件内添加mouseCaptured状态来跟踪鼠标按下
   const [mouseCaptured, setMouseCaptured] = useState(false);
 
   // 添加一个状态来存储形状的起始点位置
-  const [dragStartPoints, setDragStartPoints] = useState<{[key: string]: number[]} | null>(null);
-
-  // 拖拽状态追踪
   const [dragOrigin, setDragOrigin] = useState<{ id: string, points: number[] | null, x: number, y: number } | null>(null);
 
   // 添加拖动控制点的状态
@@ -334,7 +311,6 @@ const Canvas = forwardRef<CanvasRef, {}>((props, ref) => {
       
       // 确保使用正确的坐标转换
       // 从舞台坐标到画布坐标
-      const stagePos = stage.getRelativePointerPosition();
       const absPos = textNode.getAbsolutePosition();
       
       const textPosInStage = {
@@ -360,10 +336,6 @@ const Canvas = forwardRef<CanvasRef, {}>((props, ref) => {
   };
 
   // 处理文本输入完成
-  const handleTextareaBlur = () => {
-    // 不立即关闭编辑器，让用户可以点击工具栏按钮
-    // 工具栏按钮会自己处理完成编辑
-  };
   
   // 确认编辑完成
   const handleCompleteTextEdit = () => {
@@ -420,59 +392,7 @@ const Canvas = forwardRef<CanvasRef, {}>((props, ref) => {
   };
 
   // 修改处理键盘事件的函数，在空格按下和释放时调整鼠标样式
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.code === 'Space') {
-      setIsSpacePressed(true);
-      // 将鼠标样式设为grab
-      document.body.style.cursor = mouseCaptured ? 'grabbing' : 'grab';
-    }
-    
-    // 按Escape键结束连续绘制
-    if (e.code === 'Escape') {
-      console.log('ESC key pressed, exiting continuous drawing mode');
-      setContinuousDrawing(false);
-      setLinePoints([]);
-      setIsDrawing(false);
-      setCurrentShapeId(null);
-    }
-    
-    // 添加Ctrl+Z撤销快捷键
-    if (e.ctrlKey && e.key === 'z') {
-      e.preventDefault();
-      handleUndo();
-    }
-    
-    // 添加Ctrl+Y重做快捷键
-    if (e.ctrlKey && e.key === 'y') {
-      e.preventDefault();
-      handleRedo();
-    }
-    
-    // 添加Delete键删除选中形状
-    if ((e.key === 'Delete' || e.key === 'Backspace') && selectedId) {
-      e.preventDefault();
-      // 内联处理删除形状
-      setShapes(shapes.filter(shape => shape.id !== selectedId));
-      setAnnotations(annotations.filter(anno => anno.shapeId !== selectedId));
-      // 记录历史
-      addHistory({
-        shapes: shapes.filter(shape => shape.id !== selectedId),
-        annotations: annotations.filter(anno => anno.shapeId !== selectedId)
-      }, `删除形状 #${selectedId}`);
-      setSelectedId(null);
-    }
-    
-    // 如果正在编辑文本，不处理全局快捷键
-    if (editingText !== null) return;
-  };
 
-  const handleKeyUp = (e: KeyboardEvent) => {
-    if (e.code === 'Space') {
-      setIsSpacePressed(false);
-      // 恢复默认鼠标样式
-      document.body.style.cursor = 'default';
-    }
-  };
 
   useEffect(() => {
     const handleKeyboardDown = (e: KeyboardEvent) => {
@@ -1050,7 +970,6 @@ const Canvas = forwardRef<CanvasRef, {}>((props, ref) => {
     // 吸附当前点
     const snappedX = snapToX !== null ? snapToX : x;
     const snappedY = snapToY !== null ? snapToY : y;
-    setSnapPosition({x: snapToX, y: snapToY});
     
     // 临时保存辅助线数据
     const newGuidelines: GuidelineProps[] = [];
@@ -1339,7 +1258,6 @@ const Canvas = forwardRef<CanvasRef, {}>((props, ref) => {
     // 吸附当前点
     const snappedX = snapToX !== null ? snapToX : x;
     const snappedY = snapToY !== null ? snapToY : y;
-    setSnapPosition({x: snapToX, y: snapToY});
     
     // 临时保存辅助线数据
     const newGuidelines: GuidelineProps[] = [];
@@ -1404,13 +1322,92 @@ const Canvas = forwardRef<CanvasRef, {}>((props, ref) => {
           const length = Math.sqrt(ldx * ldx + ldy * ldy);
           const angle = Math.atan2(ldy, ldx) * 180 / Math.PI;
           
-          // ... existing polygon logic ...
+          // 计算偏移的辅助线位置
+          // 计算偏移方向，使标注始终显示在图形外部
+          const offset = 18; // 减小偏移距离，使标注线靠近实际线条
+          const normalizedLength = Math.sqrt(ldx * ldx + ldy * ldy);
+          
+          // 如果线条长度过短，不计算偏移
+          if (normalizedLength < 1) {
+            return {
+              ...shape,
+              points: [startPoint.x, startPoint.y, snappedX, snappedY],
+            };
+          }
+          
+          // 计算单位向量的垂直方向
+          const perpX = -ldy / normalizedLength;
+          const perpY = ldx / normalizedLength;
+          
+          // 确定偏移方向，判断哪一侧是图形外部
+          // 通过检查形状中心与线段的位置关系来判断
+          // 首先计算当前已绘制形状的中心（如果有多个线段）
+          let centerX = 0;
+          let centerY = 0;
+          let pointCount = 0;
+          
+          if (linePoints.length >= 4) {
+            // 有现有的线段，计算点的平均中心
+            for (let i = 0; i < linePoints.length; i += 2) {
+              centerX += linePoints[i];
+              centerY += linePoints[i + 1];
+              pointCount++;
+            }
+            
+            // 加上当前线段的起点
+            centerX += startPoint.x;
+            centerY += startPoint.y;
+            pointCount++;
+            
+            if (pointCount > 0) {
+              centerX /= pointCount;
+              centerY /= pointCount;
+            }
+          } else {
+            // 没有足够的点，使用当前起点作为参考
+            centerX = startPoint.x;
+            centerY = startPoint.y;
+          }
+          
+          // 检查线段中点到中心的向量
+          const midX = (startPoint.x + snappedX) / 2;
+          const midY = (startPoint.y + snappedY) / 2;
+          const toCenterX = centerX - midX;
+          const toCenterY = centerY - midY;
+          
+          // 计算点积来判断方向
+          const dotProduct = perpX * toCenterX + perpY * toCenterY;
+          
+          // 如果点积为负，意味着垂直向量指向形状外部，否则需要反转
+          const direction = dotProduct < 0 ? 1 : -1;
+          
+          // 应用方向校正后的偏移
+          const offsetStartX = startPoint.x + perpX * offset * direction;
+          const offsetStartY = startPoint.y + perpY * offset * direction;
+          const offsetEndX = snappedX + perpX * offset * direction;
+          const offsetEndY = snappedY + perpY * offset * direction;
+          
+          // 为文本计算额外的偏移，将其放在标注线外侧
+          const textOffset = 25; // 增加文本相对于标注线的额外偏移，从15增加到25
+          const textPosX = offsetStartX + ldx / 2 + perpX * textOffset * direction;
+          const textPosY = offsetStartY + ldy / 2 + perpY * textOffset * direction;
+          
+          // 添加长度和角度辅助线，使用偏移后的位置（单位换算为米）
+          newGuidelines.push(
+            {
+              points: [offsetStartX, offsetStartY, offsetEndX, offsetEndY],
+              text: `长度: ${formatMeasurement(length)}, 角度: ${Math.round(angle)}°`,
+              textPosition: { 
+                x: textPosX, 
+                y: textPosY
+              }
+            }
+          );
           
           return {
             ...shape,
             points: [startPoint.x, startPoint.y, snappedX, snappedY],
           };
-          
         case 'brush':
         case 'path':
           const finalPoints = [...(shape.points || []), x, y];
@@ -1590,9 +1587,6 @@ const Canvas = forwardRef<CanvasRef, {}>((props, ref) => {
         setCurrentShapeId(newId);
         setStartPoint({ x: lineEndX, y: lineEndY });
         setIsDrawing(true);
-        
-        // 重置吸附状态，为下一条线准备
-        setSnapPosition({x: null, y: null});
       }, 0);
       
       return; // 不执行后续代码
@@ -1674,15 +1668,6 @@ const Canvas = forwardRef<CanvasRef, {}>((props, ref) => {
   
   // 缩放系数
   const scale = zoom / 100;
-
-  // 处理形状删除时同时删除关联的标注
-  const handleDeleteShape = (id: string) => {
-    setShapes(shapes.filter(shape => shape.id !== id));
-    setAnnotations(annotations.filter(anno => anno.shapeId !== id));
-    if (selectedId === id) {
-      setSelectedId(null);
-    }
-  };
 
   // 当形状移动时更新其关联的标注位置
   const handleShapeDragEnd = (id: string, newX: number, newY: number) => {
@@ -1776,7 +1761,7 @@ const Canvas = forwardRef<CanvasRef, {}>((props, ref) => {
         // 根据控制点类型决定样式
         let fill = 'white';
         let stroke = '#1890ff';
-        let strokeWidth = 1.5;
+        const strokeWidth = 1.5;
         let cursor = 'pointer';
         
         if (type === HandleType.CORNER) {
@@ -1938,7 +1923,7 @@ const Canvas = forwardRef<CanvasRef, {}>((props, ref) => {
                 }
               } else if (shape.type === 'line' && shape.points && shape.points.length >= 4) {
                 // 线条的调整
-                let newPoints = [...shape.points];
+                const newPoints = [...shape.points];
                 
                 if (index === 0) {
                   // 起点
@@ -2838,7 +2823,7 @@ const Canvas = forwardRef<CanvasRef, {}>((props, ref) => {
         // 如果提供了新的点坐标（用于线条），直接更新
         return {
           ...anno,
-          points: anno.points.map((val, index) => {
+          points: anno.points.map((_val, index) => {
             // 基于线条起点和终点的变化更新标注
             if (index % 4 < 2) {
               return newPoints[index % 2];
@@ -2859,7 +2844,7 @@ const Canvas = forwardRef<CanvasRef, {}>((props, ref) => {
         // 缩放的情况（圆形）
         return {
           ...anno,
-          points: anno.points.map((val, index) => {
+          points: anno.points.map((val) => {
             return val * scaleFactor;
           }),
           textPosition: anno.textPosition 

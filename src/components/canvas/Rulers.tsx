@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from 'react';
-import { useCanvasStore } from '../../store/canvasStore';
 
 interface RulerProps {
   zoom: number;
