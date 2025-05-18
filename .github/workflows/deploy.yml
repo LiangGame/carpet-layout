@@ -10,7 +10,9 @@ on:
 
 # 设置 GITHUB_TOKEN 的权限
 permissions:
-  contents: write
+  contents: write 
+  pages: write 
+  id-token: write 
 
 jobs:
   build-and-deploy:
@@ -40,3 +42,4 @@ jobs:
           folder: dist
           branch: gh-pages
           clean: true 
+          verbose: true  # 开启详细日志 
